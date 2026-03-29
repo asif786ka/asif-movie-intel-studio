@@ -1,15 +1,17 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search as SearchIcon, Star, Calendar } from "lucide-react";
+import { Search as SearchIcon, Star, Calendar, Loader2 } from "lucide-react";
 import { useMovieSearch, useMovieDetails } from "../hooks/use-movies";
 import { Input, Card, Badge, Button } from "../components/UI";
+import { useReadinessStore } from "../hooks/useBackendReadiness";
 import type { MovieSearchResult } from "../lib/types";
 
 export default function Search() {
   const { query, setQuery, data: movies, isLoading } = useMovieSearch("", 500);
   const [selectedId, setSelectedId] = useState<number | null>(null);
-
   const { data: details, isLoading: detailsLoading } = useMovieDetails(selectedId);
+  const backendStatus = useReadinessStore((s) => s.status);
+  const isReady = backendStatus === "ready";
 
   return (
     <div className="p-6 md:p-10 max-w-7xl mx-auto h-full flex flex-col">
@@ -22,11 +24,18 @@ export default function Search() {
         <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
         <Input 
           className="pl-12 py-6 text-lg rounded-2xl bg-black/40 border-white/10"
-          placeholder="Search for movies..." 
+          placeholder={isReady ? "Search for movies..." : "Search will be available once the engine is ready..."}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          disabled={!isReady}
         />
         {isLoading && <div className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />}
+        {!isReady && (
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-amber-400 text-xs">
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            <span>Warming up</span>
+          </div>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto pb-20">
