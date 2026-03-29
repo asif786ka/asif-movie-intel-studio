@@ -1,30 +1,8 @@
-/**
- * App.tsx — Root component for the Asif Movie Intel Studio frontend.
- *
- * Architecture Note (Senior AI Architect):
- *   This is the top-level React component that assembles the full application:
- *
- *   Provider Stack (outside → inside):
- *     1. QueryClientProvider — TanStack React Query for server state caching
- *     2. TooltipProvider — Shared tooltip context for UI components
- *     3. BrowserRouter — React Router with artifact-aware basename
- *     4. AppLayout — Shared navigation sidebar + content area
- *
- *   Routing Architecture:
- *     - basename is derived from import.meta.env.BASE_URL (set by Vite)
- *     - This enables deployment at any path prefix (/, /studio, etc.)
- *     - 7 routes covering the full application surface area
- *     - Catch-all (*) route for 404 handling
- *
- *   Query Client Configuration:
- *     - retry: 1 — single retry on failed queries (fail fast for UX)
- *     - refetchOnWindowFocus: false — prevent unnecessary API calls
- */
-
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AnimatePresence } from "framer-motion";
 
 import Home from "./pages/Home";
 import Search from "./pages/Search";
@@ -36,6 +14,9 @@ import Eval from "./pages/Eval";
 import NotFound from "@/pages/not-found";
 
 import { AppLayout } from "./components/AppLayout";
+import { BackendStartupScreen } from "./components/BackendStartupScreen";
+import { BackendStatusPill } from "./components/BackendStatusPill";
+import { useBackendReadiness } from "./hooks/useBackendReadiness";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -47,19 +28,28 @@ const queryClient = new QueryClient({
 });
 
 function AppRoutes() {
+  const { status } = useBackendReadiness();
+  const showStartup = status === "checking" || status === "starting";
+
   return (
-    <AppLayout>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/search" element={<Search />} />
-        <Route path="/chat" element={<Chat />} />
-        <Route path="/upload" element={<Upload />} />
-        <Route path="/compare" element={<Compare />} />
-        <Route path="/admin" element={<Admin />} />
-        <Route path="/eval" element={<Eval />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </AppLayout>
+    <>
+      <AnimatePresence>
+        {showStartup && <BackendStartupScreen />}
+      </AnimatePresence>
+      <BackendStatusPill />
+      <AppLayout>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/search" element={<Search />} />
+          <Route path="/chat" element={<Chat />} />
+          <Route path="/upload" element={<Upload />} />
+          <Route path="/compare" element={<Compare />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/eval" element={<Eval />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </AppLayout>
+    </>
   );
 }
 
