@@ -3,6 +3,7 @@ import { logger } from "./lib/logger";
 import { spawn, execSync, type ChildProcess } from "child_process";
 import path from "path";
 import { fileURLToPath } from "url";
+import fs from "fs";
 
 const rawPort = process.env["PORT"];
 
@@ -41,7 +42,8 @@ function startPythonBackend() {
   const backendDir = path.join(workspaceRoot, "backend");
   const pythonCmd = findPython();
 
-  logger.info({ backendDir, pythonCmd }, "Starting Python backend");
+  const pythonPath = execSync(`which ${pythonCmd}`, { encoding: "utf-8" }).trim();
+  logger.info({ backendDir, pythonCmd, pythonPath }, "Starting Python backend");
 
   try {
     const pythonVersion = execSync(`${pythonCmd} --version`, {
@@ -53,17 +55,25 @@ function startPythonBackend() {
     return;
   }
 
-  try {
-    logger.info("Installing Python dependencies...");
-    execSync(`${pythonCmd} -m pip install -r requirements.txt --quiet --disable-pip-version-check`, {
-      cwd: backendDir,
-      stdio: "pipe",
-      timeout: 120000,
-    });
-    logger.info("Python dependencies installed");
-  } catch (e) {
-    logger.warn("pip install may have had issues, continuing anyway");
+  const reqFile = path.join(backendDir, "requirements.txt");
+  if (fs.existsSync(reqFile)) {
+    try {
+      logger.info("Installing Python dependencies...");
+      execSync(
+        `${pythonCmd} -m pip install -r requirements.txt --quiet --disable-pip-version-check 2>&1`,
+        {
+          cwd: backendDir,
+          encoding: "utf-8",
+          timeout: 120000,
+        },
+      );
+      logger.info("Python dependencies installed");
+    } catch (e: any) {
+      logger.error({ err: e.message }, "pip install failed");
+    }
   }
+
+  logger.info("Spawning uvicorn process...");
 
   pythonProcess = spawn(
     pythonCmd,
@@ -75,29 +85,29 @@ function startPythonBackend() {
       "0.0.0.0",
       "--port",
       "8000",
+      "--log-level",
+      "info",
     ],
     {
       cwd: backendDir,
-      stdio: "pipe",
+      stdio: ["ignore", "pipe", "pipe"],
       env: { ...process.env, PYTHONUNBUFFERED: "1" },
     },
   );
 
+  logger.info({ pid: pythonProcess.pid }, "Python process spawned");
+
   pythonProcess.stdout?.on("data", (data: Buffer) => {
     const lines = data.toString().trim().split("\n");
     for (const line of lines) {
-      logger.info({ source: "python" }, line);
+      logger.info({ source: "python-stdout" }, line);
     }
   });
 
   pythonProcess.stderr?.on("data", (data: Buffer) => {
     const lines = data.toString().trim().split("\n");
     for (const line of lines) {
-      if (line.includes("ERROR") || line.includes("Traceback")) {
-        logger.error({ source: "python" }, line);
-      } else {
-        logger.info({ source: "python-stderr" }, line);
-      }
+      logger.info({ source: "python-stderr" }, line);
     }
   });
 
@@ -106,7 +116,7 @@ function startPythonBackend() {
   });
 
   pythonProcess.on("exit", (code, signal) => {
-    logger.warn({ code, signal }, "Python backend exited");
+    logger.error({ code, signal }, "Python backend process exited");
     if (isProduction && code !== 0) {
       logger.info("Restarting Python backend in 5 seconds...");
       setTimeout(startPythonBackend, 5000);
