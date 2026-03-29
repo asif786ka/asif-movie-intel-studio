@@ -27,7 +27,14 @@ export async function streamChat(
     signal,
   });
 
-  if (!res.ok) throw new Error(`Stream failed: ${res.status}`);
+  if (!res.ok) {
+    let msg = `Stream failed: ${res.status}`;
+    try {
+      const body = await res.json();
+      if (body.error) msg = body.error;
+    } catch {}
+    throw new Error(msg);
+  }
   if (!res.body) throw new Error("No body in response");
 
   const reader = res.body.getReader();
