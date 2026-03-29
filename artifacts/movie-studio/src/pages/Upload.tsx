@@ -1,13 +1,16 @@
 import { useCallback, useState } from "react";
-import { Upload as UploadIcon, FileText, CheckCircle2 } from "lucide-react";
+import { Upload as UploadIcon, FileText, CheckCircle2, Loader2 } from "lucide-react";
 import { Card, Button, Input, Badge } from "../components/UI";
 import { useUpload } from "../hooks/use-upload";
 import { useUploadStore } from "../stores/appStore";
+import { useReadinessStore } from "../hooks/useBackendReadiness";
 
 export default function Upload() {
   const { file, metadata, uploadHistory, setFile, setMetadata, resetMetadata, addToHistory } = useUploadStore();
   const { upload, progress, isUploading, error } = useUpload();
   const [success, setSuccess] = useState(false);
+  const backendStatus = useReadinessStore((s) => s.status);
+  const isReady = backendStatus === "ready";
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -51,6 +54,13 @@ export default function Upload() {
         <h2 className="text-3xl font-display font-bold text-white mb-2">Ingest Documents</h2>
         <p className="text-muted-foreground">Upload screenplays, reviews, and analysis to the vector store.</p>
       </div>
+
+      {!isReady && (
+        <div className="mb-6 px-4 py-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center gap-3">
+          <Loader2 className="w-4 h-4 animate-spin text-amber-400 flex-shrink-0" />
+          <p className="text-sm text-amber-300">The AI engine is warming up. You can prepare your document — upload will be available shortly.</p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="space-y-6">
@@ -136,8 +146,14 @@ export default function Upload() {
                 </div>
               )}
 
-              <Button onClick={handleUpload} disabled={!file || isUploading} className="w-full mt-4 py-6 text-lg">
-                {isUploading ? "Ingesting..." : "Ingest to Vector Store"}
+              <Button onClick={handleUpload} disabled={!file || isUploading || !isReady} className="w-full mt-4 py-6 text-lg">
+                {!isReady ? (
+                  <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Waiting for AI engine...</>
+                ) : isUploading ? (
+                  "Ingesting..."
+                ) : (
+                  "Ingest to Vector Store"
+                )}
               </Button>
               {error && <p className="text-red-400 text-sm mt-2 text-center">{error}</p>}
               {success && !isUploading && (
