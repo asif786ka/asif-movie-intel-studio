@@ -29,8 +29,9 @@ const statusMessages: Record<BackendStatus, string> = {
 };
 
 const BASE = import.meta.env.BASE_URL + "api";
-const POLL_INTERVAL = 4000;
-const MAX_CHECKS = 60;
+const FAST_POLL = 4000;
+const SLOW_POLL = 10000;
+const FAST_PHASE_CHECKS = 45;
 
 export function useBackendReadiness() {
   const store = useReadinessStore();
@@ -42,23 +43,28 @@ export function useBackendReadiness() {
 
     async function check() {
       try {
-        const res = await fetch(`${BASE}/health`, { signal: AbortSignal.timeout(5000) });
-        if (res.ok) {
-          try {
-            const readyRes = await fetch(`${BASE}/ready`, { signal: AbortSignal.timeout(5000) });
-            if (readyRes.ok) {
-              const data = await readyRes.json();
-              store.setReady(data.data?.vector_store_chunks || 0);
-              if (intervalRef.current) clearInterval(intervalRef.current);
-              return;
-            }
-          } catch {}
-          store.setReady(0);
-          if (intervalRef.current) clearInterval(intervalRef.current);
+        const healthRes = await fetch(`${BASE}/health`, { signal: AbortSignal.timeout(5000) });
+        if (!healthRes.ok) {
+          if (healthRes.status === 503) {
+            store.setStatus("starting", "AI engine is loading...");
+          } else {
+            store.setStatus("starting", "Waiting for backend services...");
+          }
+          checkCount.current++;
           return;
         }
-        if (res.status === 503) {
-          store.setStatus("starting", "AI engine is loading...");
+
+        try {
+          const readyRes = await fetch(`${BASE}/ready`, { signal: AbortSignal.timeout(5000) });
+          if (readyRes.ok) {
+            const data = await readyRes.json();
+            store.setReady(data.data?.vector_store_chunks || 0);
+            if (intervalRef.current) clearInterval(intervalRef.current);
+            return;
+          }
+          store.setStatus("starting", "Backend is loading AI models...");
+        } catch {
+          store.setStatus("starting", "Backend is initializing...");
         }
       } catch {
         if (checkCount.current < 5) {
@@ -69,14 +75,16 @@ export function useBackendReadiness() {
       }
 
       checkCount.current++;
-      if (checkCount.current >= MAX_CHECKS) {
-        store.setStatus("unavailable", "Services are taking longer than expected. Please refresh.");
-        if (intervalRef.current) clearInterval(intervalRef.current);
+
+      if (checkCount.current === FAST_PHASE_CHECKS && intervalRef.current) {
+        clearInterval(intervalRef.current);
+        store.setStatus("unavailable", "Taking longer than expected — still trying...");
+        intervalRef.current = setInterval(check, SLOW_POLL);
       }
     }
 
     check();
-    intervalRef.current = setInterval(check, POLL_INTERVAL);
+    intervalRef.current = setInterval(check, FAST_POLL);
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
