@@ -7,6 +7,7 @@ import type { ChatMessage } from "../lib/types";
 const MAX_RETRIES = 8;
 const BASE_DELAY = 4000;
 const MAX_DELAY = 15000;
+const READY_WAIT_TIMEOUT = 180000;
 
 export function useChatStream() {
   const { messages, isStreaming, sessionId, addMessage, updateMessage, setSessionId, setStreaming } = useChatStore();
@@ -22,39 +23,49 @@ export function useChatStream() {
     if (isStreaming || !query.trim()) return;
 
     const readiness = useReadinessStore.getState();
+    const userMsgId = Date.now().toString();
+    const assistantId = (Date.now() + 1).toString();
+
+    addMessage({ id: userMsgId, role: "user", content: query } as ChatMessage);
+
     if (readiness.status !== "ready") {
-      const userMsg: ChatMessage = { id: Date.now().toString(), role: "user", content: query };
-      const infoId = (Date.now() + 1).toString();
-      addMessage(userMsg);
-      addMessage({ id: infoId, role: "assistant", content: "The AI engine is still warming up. Your question will be sent automatically once it's ready — hang tight!" });
-      
-      const waitForReady = () => new Promise<void>((resolve) => {
+      addMessage({ id: assistantId, role: "assistant", content: "The AI engine is still warming up. Your question will be sent automatically once it's ready — hang tight!" });
+
+      const readyOrTimeout = await new Promise<boolean>((resolve) => {
+        const timeout = setTimeout(() => {
+          unsub();
+          resolve(false);
+        }, READY_WAIT_TIMEOUT);
+
         const unsub = useReadinessStore.subscribe((state) => {
           if (state.status === "ready") {
+            clearTimeout(timeout);
             unsub();
-            resolve();
+            resolve(true);
           }
         });
+
         if (useReadinessStore.getState().status === "ready") {
+          clearTimeout(timeout);
           unsub();
-          resolve();
+          resolve(true);
         }
       });
-      
-      await waitForReady();
-      updateMessage(infoId, { content: "" });
+
+      if (!readyOrTimeout) {
+        updateMessage(assistantId, {
+          content: "The AI engine is taking longer than expected to start. Please try again in a moment.",
+        });
+        return;
+      }
+
+      updateMessage(assistantId, { content: "" });
+    } else {
+      addMessage({ id: assistantId, role: "assistant", content: "" });
     }
 
     abortControllerRef.current = new AbortController();
     setStreaming(true);
-
-    const hasUserMsg = messages.some(m => m.role === "user" && m.content === query);
-    if (!hasUserMsg) {
-      const userMsg: ChatMessage = { id: Date.now().toString(), role: "user", content: query };
-      addMessage(userMsg);
-    }
-    const assistantId = (Date.now() + 1).toString();
-    addMessage({ id: assistantId, role: "assistant", content: "" });
 
     let fullContent = "";
     let lastError: Error | null = null;
@@ -115,7 +126,7 @@ export function useChatStream() {
     }
 
     setStreaming(false);
-  }, [isStreaming, sessionId, messages, addMessage, updateMessage, setSessionId, setStreaming]);
+  }, [isStreaming, sessionId, addMessage, updateMessage, setSessionId, setStreaming]);
 
   const stopGeneration = useCallback(() => {
     abortControllerRef.current?.abort();
