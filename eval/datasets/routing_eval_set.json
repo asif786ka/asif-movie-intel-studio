@@ -1,0 +1,22 @@
+[
+  {"id": "route_001", "query": "List top Nolan sci-fi movies", "expected_route": "structured_only"},
+  {"id": "route_002", "query": "What is the rating of Inception?", "expected_route": "structured_only"},
+  {"id": "route_003", "query": "Find movies similar to The Matrix", "expected_route": "structured_only"},
+  {"id": "route_004", "query": "Who stars in Dune?", "expected_route": "structured_only"},
+  {"id": "route_005", "query": "What genre is Pulp Fiction?", "expected_route": "structured_only"},
+  {"id": "route_006", "query": "Show me action movies from 2023", "expected_route": "structured_only"},
+  {"id": "route_007", "query": "What is the budget of Avatar: The Way of Water?", "expected_route": "structured_only"},
+  {"id": "route_008", "query": "Explain philosophical themes in Interstellar", "expected_route": "rag_only"},
+  {"id": "route_009", "query": "Summarize critic reviews of Oppenheimer", "expected_route": "rag_only"},
+  {"id": "route_010", "query": "What recurring themes appear in Denis Villeneuve films?", "expected_route": "rag_only"},
+  {"id": "route_011", "query": "Analyze the visual style of Blade Runner 2049", "expected_route": "rag_only"},
+  {"id": "route_012", "query": "Explain the Dune franchise timeline", "expected_route": "rag_only"},
+  {"id": "route_013", "query": "What is the significance of the Barbenheimer phenomenon?", "expected_route": "rag_only"},
+  {"id": "route_014", "query": "Discuss the themes of colonialism in Dune", "expected_route": "rag_only"},
+  {"id": "route_015", "query": "Compare Interstellar and Dune by themes and reception", "expected_route": "hybrid"},
+  {"id": "route_016", "query": "Which Nolan sci-fi films had strongest reception and why?", "expected_route": "hybrid"},
+  {"id": "route_017", "query": "Show movies similar to Arrival and explain thematic connections", "expected_route": "hybrid"},
+  {"id": "route_018", "query": "Compare Dune and Dune Part Two in box office and critical response", "expected_route": "hybrid"},
+  {"id": "route_019", "query": "How do Nolan and Villeneuve differ in directing style and box office performance?", "expected_route": "hybrid"},
+  {"id": "route_020", "query": "Compare Oppenheimer awards with other 2023 films", "expected_route": "hybrid"}
+]

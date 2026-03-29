@@ -1,0 +1,142 @@
+[
+  {
+    "id": "eval_001",
+    "query": "What are the main themes in Interstellar?",
+    "expected_route": "rag_only",
+    "expected_answer_contains": ["love", "time", "sacrifice"],
+    "expected_citations": true
+  },
+  {
+    "id": "eval_002",
+    "query": "What is the runtime of Interstellar?",
+    "expected_route": "structured_only",
+    "expected_answer_contains": ["169"],
+    "expected_citations": false
+  },
+  {
+    "id": "eval_003",
+    "query": "Compare Interstellar and Dune by themes and reception",
+    "expected_route": "hybrid",
+    "expected_answer_contains": ["Interstellar", "Dune"],
+    "expected_citations": true
+  },
+  {
+    "id": "eval_004",
+    "query": "Who directed Oppenheimer?",
+    "expected_route": "structured_only",
+    "expected_answer_contains": ["Christopher Nolan"],
+    "expected_citations": false
+  },
+  {
+    "id": "eval_005",
+    "query": "Explain the Dune franchise timeline with citations",
+    "expected_route": "rag_only",
+    "expected_answer_contains": ["Butlerian", "Atreides", "spice"],
+    "expected_citations": true
+  },
+  {
+    "id": "eval_006",
+    "query": "Which Christopher Nolan sci-fi films had the strongest critical reception?",
+    "expected_route": "hybrid",
+    "expected_answer_contains": ["Interstellar", "Inception"],
+    "expected_citations": true
+  },
+  {
+    "id": "eval_007",
+    "query": "What recurring themes appear in Denis Villeneuve films?",
+    "expected_route": "rag_only",
+    "expected_answer_contains": ["communication", "identity"],
+    "expected_citations": true
+  },
+  {
+    "id": "eval_008",
+    "query": "Show movies similar to Arrival and explain why",
+    "expected_route": "hybrid",
+    "expected_answer_contains": ["Arrival"],
+    "expected_citations": true
+  },
+  {
+    "id": "eval_009",
+    "query": "How many Academy Awards did Oppenheimer win?",
+    "expected_route": "rag_only",
+    "expected_answer_contains": ["7", "seven"],
+    "expected_citations": true
+  },
+  {
+    "id": "eval_010",
+    "query": "What is the budget of Dune?",
+    "expected_route": "structured_only",
+    "expected_answer_contains": ["165"],
+    "expected_citations": false
+  },
+  {
+    "id": "eval_011",
+    "query": "Summarize Oppenheimer reviews using critic documents",
+    "expected_route": "rag_only",
+    "expected_answer_contains": ["Cillian Murphy", "acclaim"],
+    "expected_citations": true
+  },
+  {
+    "id": "eval_012",
+    "query": "List the top cast members of Interstellar",
+    "expected_route": "structured_only",
+    "expected_answer_contains": ["Matthew McConaughey", "Anne Hathaway"],
+    "expected_citations": false
+  },
+  {
+    "id": "eval_013",
+    "query": "What is the significance of time dilation in Interstellar?",
+    "expected_route": "rag_only",
+    "expected_answer_contains": ["time", "dilation"],
+    "expected_citations": true
+  },
+  {
+    "id": "eval_014",
+    "query": "Compare the box office performance of Dune and Dune Part Two",
+    "expected_route": "hybrid",
+    "expected_answer_contains": ["Dune"],
+    "expected_citations": true
+  },
+  {
+    "id": "eval_015",
+    "query": "What is the Barbenheimer phenomenon?",
+    "expected_route": "rag_only",
+    "expected_answer_contains": ["Barbie", "Oppenheimer"],
+    "expected_citations": true
+  },
+  {
+    "id": "eval_016",
+    "query": "Find sci-fi movies released after 2020",
+    "expected_route": "structured_only",
+    "expected_answer_contains": ["Dune"],
+    "expected_citations": false
+  },
+  {
+    "id": "eval_017",
+    "query": "Analyze the visual style of Denis Villeneuve",
+    "expected_route": "rag_only",
+    "expected_answer_contains": ["visual", "cinematography"],
+    "expected_citations": true
+  },
+  {
+    "id": "eval_018",
+    "query": "What are the genre classifications of The Dark Knight?",
+    "expected_route": "structured_only",
+    "expected_answer_contains": ["Action", "Crime"],
+    "expected_citations": false
+  },
+  {
+    "id": "eval_019",
+    "query": "Explain how colonialism themes are explored in Dune",
+    "expected_route": "rag_only",
+    "expected_answer_contains": ["colonialism", "spice", "Fremen"],
+    "expected_citations": true
+  },
+  {
+    "id": "eval_020",
+    "query": "Compare directors Christopher Nolan and Denis Villeneuve in terms of themes and style",
+    "expected_route": "hybrid",
+    "expected_answer_contains": ["Nolan", "Villeneuve"],
+    "expected_citations": true
+  }
+]

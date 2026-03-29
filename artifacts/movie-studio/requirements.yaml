@@ -1,0 +1,23 @@
+packages:
+  "framer-motion": "For cinematic page transitions and micro-interactions"
+  "recharts": "For admin dashboard and evaluation metrics visualization"
+  "react-markdown": "To render structured markdown responses in chat and compare pages"
+  "remark-gfm": "To support tables and github-flavored markdown in chat"
+  "clsx": "For dynamic class merging"
+  "tailwind-merge": "For reliable tailwind class conflict resolution"
+
+images:
+  - path: "artifacts/movie-studio/public/images/hero-bg.png"
+    description: "Cinematic dark sci-fi background with glowing amber dust and deep slate blue nebulae, very subtle and professional, 8k resolution, suitable for a dark-mode website hero section."
+    aspect_ratio: "16:9"
+  - path: "artifacts/movie-studio/public/images/arch-diagram.png"
+    description: "Abstract glowing data pipeline representing AI RAG architecture, nodes connected by glowing amber lines over a deep dark blue background, minimalist isometric 3D."
+    aspect_ratio: "16:9"
+  - path: "artifacts/movie-studio/public/images/film-reel-3d.png"
+    description: "A sleek, dark, matte-black 3D film reel with subtle gold edge lighting, isolated on a completely dark transparent background."
+    aspect_ratio: "1:1"
+
+notes:
+  - The API calls proxy to a Python FastAPI backend at /api/ on the same origin.
+  - Using standard fetch with TanStack Query.
+  - Chat streaming uses Server-Sent Events (SSE) parsed manually from the response body.
