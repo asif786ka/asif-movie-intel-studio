@@ -17,6 +17,7 @@ Architecture Note (Senior AI Architect):
 
 import os
 import sys
+import asyncio
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -112,16 +113,22 @@ async def startup_event():
     """Initialize the application on startup.
 
     Seeds the ChromaDB vector store with sample documents if empty.
-    This ensures the demo works out of the box without manual setup.
+    Seeding runs in the background so the server can start accepting
+    requests immediately (important for production health checks).
     """
     logger.info(f"Starting {settings.app_name} v{settings.app_version}")
     logger.info(f"LLM Provider: {settings.llm_provider}")
     logger.info(f"TMDB configured: {bool(settings.tmdb_api_key)}")
     logger.info(f"Versions: {get_all_versions()}")
 
-    # Seed sample documents into ChromaDB on first run
-    from app.scripts.seed_data import seed_sample_documents
-    await seed_sample_documents()
+    async def _seed_in_background():
+        try:
+            from app.scripts.seed_data import seed_sample_documents
+            await seed_sample_documents()
+        except Exception as e:
+            logger.error(f"Background seeding failed: {e}")
+
+    asyncio.create_task(_seed_in_background())
 
 
 if __name__ == "__main__":
