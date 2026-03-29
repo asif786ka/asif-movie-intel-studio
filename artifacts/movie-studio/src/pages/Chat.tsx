@@ -3,9 +3,10 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Send, Bot, User, FileText, ChevronRight, X, Loader2 } from "lucide-react";
+import { Send, Bot, User, FileText, X, Loader2 } from "lucide-react";
 import { Input, Button, Card, Badge } from "../components/UI";
 import { useChatStream } from "../hooks/use-chat";
+import { useReadinessStore } from "../hooks/useBackendReadiness";
 import { Citation } from "../lib/types";
 
 export default function Chat() {
@@ -13,8 +14,9 @@ export default function Chat() {
   const { messages, isStreaming, sendMessage, stopGeneration } = useChatStream();
   const bottomRef = useRef<HTMLDivElement>(null);
   const [activeCitation, setActiveCitation] = useState<Citation | null>(null);
+  const backendStatus = useReadinessStore((s) => s.status);
+  const isReady = backendStatus === "ready";
 
-  // Auto-submit query from URL if present
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const q = params.get("q");
@@ -37,7 +39,6 @@ export default function Chat() {
 
   return (
     <div className="h-full flex overflow-hidden">
-      {/* Chat Area */}
       <div className="flex-1 flex flex-col h-full relative">
         <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8 pb-32">
           {messages.length === 0 && (
@@ -45,10 +46,16 @@ export default function Chat() {
               <Bot className="w-16 h-16 mb-6 text-primary" />
               <h2 className="text-2xl font-display font-semibold text-white mb-2">Movie Studio AI</h2>
               <p className="text-muted-foreground">Ask anything about movies, directors, themes, box office performance, or detailed lore.</p>
+              {!isReady && (
+                <div className="mt-6 flex items-center gap-2 text-amber-400 text-sm">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>AI engine is warming up — you can type your question now</span>
+                </div>
+              )}
             </div>
           )}
 
-          {messages.map((msg, i) => (
+          {messages.map((msg) => (
             <motion.div 
               key={msg.id} 
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
@@ -67,17 +74,23 @@ export default function Chat() {
                     : "bg-card border border-white/5 shadow-xl rounded-tl-sm text-white/90"
                 }`}>
                   {msg.role === "assistant" ? (
-                    <div className="prose prose-invert max-w-none">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {msg.content || "..."}
-                      </ReactMarkdown>
-                    </div>
+                    msg.content ? (
+                      <div className="prose prose-invert max-w-none">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {msg.content}
+                        </ReactMarkdown>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Thinking...</span>
+                      </div>
+                    )
                   ) : (
                     <p className="text-[15px] leading-relaxed">{msg.content}</p>
                   )}
                 </div>
 
-                {/* Metadata Badges for Assistant */}
                 {msg.role === "assistant" && !isStreaming && msg.queryType && (
                   <div className="flex flex-wrap gap-2 px-2">
                     <Badge variant="outline" className="text-xs">Query: {msg.queryType}</Badge>
@@ -98,13 +111,12 @@ export default function Chat() {
           <div ref={bottomRef} />
         </div>
 
-        {/* Input Area */}
         <div className="absolute bottom-0 left-0 right-0 p-4 md:p-8 bg-gradient-to-t from-background via-background to-transparent">
           <form onSubmit={handleSubmit} className="max-w-4xl mx-auto relative group">
             <Input 
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Ask about movies, actors, or cinematic themes..."
+              placeholder={isReady ? "Ask about movies, actors, or cinematic themes..." : "Type your question — it will send when the AI is ready..."}
               className="pl-6 pr-32 py-8 text-lg rounded-full bg-card/90 backdrop-blur-xl border-white/10 shadow-2xl focus:border-primary/50 focus:ring-primary/20 focus:bg-card"
               disabled={isStreaming}
             />
@@ -121,7 +133,6 @@ export default function Chat() {
         </div>
       </div>
 
-      {/* Citation Sidebar */}
       <div className="hidden lg:flex w-80 flex-col border-l border-white/5 bg-card/20 backdrop-blur-sm z-10">
         <div className="p-6 border-b border-white/5">
           <h3 className="font-display font-semibold text-white flex items-center gap-2">
@@ -150,7 +161,6 @@ export default function Chat() {
         </div>
       </div>
 
-      {/* Source Excerpt Drawer */}
       <AnimatePresence>
         {activeCitation && (
           <motion.div 
