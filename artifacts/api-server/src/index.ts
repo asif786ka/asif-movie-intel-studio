@@ -73,25 +73,15 @@ function startPythonBackend() {
     }
   }
 
-  logger.info("Spawning uvicorn process...");
+  logger.info("Spawning Python backend process...");
 
   pythonProcess = spawn(
     pythonCmd,
-    [
-      "-m",
-      "uvicorn",
-      "app.main:app",
-      "--host",
-      "0.0.0.0",
-      "--port",
-      "8000",
-      "--log-level",
-      "info",
-    ],
+    ["start_production.py"],
     {
       cwd: backendDir,
       stdio: ["ignore", "pipe", "pipe"],
-      env: { ...process.env, PYTHONUNBUFFERED: "1" },
+      env: { ...process.env, PYTHONUNBUFFERED: "1", PYTHONDONTWRITEBYTECODE: "1" },
     },
   );
 
