@@ -5,12 +5,15 @@ import remarkGfm from "remark-gfm";
 import { Card, Button, Input, Badge } from "../components/UI";
 import { useMovieSearch, useCompareMovies } from "../hooks/use-movies";
 import { useCompareStore } from "../stores/appStore";
+import { useReadinessStore } from "../hooks/useBackendReadiness";
 import type { MovieSearchResult } from "../lib/types";
 
 export default function Compare() {
   const { query, setQuery, data: searchResults } = useMovieSearch("", 300);
   const { selectedMovies, addMovie, removeMovie } = useCompareStore();
   const compareMutation = useCompareMovies();
+  const backendStatus = useReadinessStore((s) => s.status);
+  const isReady = backendStatus === "ready";
 
   const handleAdd = (movie: MovieSearchResult) => {
     addMovie(movie);
@@ -49,9 +52,16 @@ export default function Compare() {
           <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <Input 
             value={query} onChange={e => setQuery(e.target.value)}
-            placeholder="Search to add movies (e.g. Dune, Blade Runner)..."
+            placeholder={isReady ? "Search to add movies (e.g. Dune, Blade Runner)..." : "Search will be available once AI engine is ready..."}
             className="pl-12 py-6 text-lg bg-card/80 border-primary/30 shadow-lg"
+            disabled={!isReady}
           />
+          {!isReady && (
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-amber-400 text-xs">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <span>Warming up</span>
+            </div>
+          )}
           {query && searchResults && searchResults.length > 0 && (
             <Card className="absolute top-full left-0 right-0 mt-2 p-2 z-50 max-h-64 overflow-y-auto bg-black/90 backdrop-blur-xl border-white/10">
               {searchResults.slice(0, 5).map(m => (
@@ -78,8 +88,18 @@ export default function Compare() {
           </div>
         )}
 
-        <Button onClick={handleCompare} disabled={selectedMovies.length < 2 || compareMutation.isPending} className="w-full py-6 text-lg shadow-primary/30">
-          {compareMutation.isPending ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Analyzing Knowledge Base...</> : "Generate Comparison"}
+        <Button
+          onClick={handleCompare}
+          disabled={selectedMovies.length < 2 || compareMutation.isPending || !isReady}
+          className="w-full py-6 text-lg shadow-primary/30"
+        >
+          {!isReady ? (
+            <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Waiting for AI engine...</>
+          ) : compareMutation.isPending ? (
+            <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Analyzing Knowledge Base...</>
+          ) : (
+            "Generate Comparison"
+          )}
         </Button>
       </div>
 
